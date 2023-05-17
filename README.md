@@ -1,0 +1,1 @@
+Reinforcement learning of myCobot on Omniverse Platform **Repository for reasearch purpose.
