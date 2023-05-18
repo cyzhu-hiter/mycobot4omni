@@ -1,0 +1,310 @@
+<mujoco>
+  <compiler angle="radian" meshdir="./meshes/" texturedir="./textures" coordinate="local" />
+  <option timestep="0.002">
+    <flag warmstart="enable"></flag>
+  </option>
+  <asset>
+    <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2"
+      width="512" height="512" />
+    <material name="MatGnd" reflectance="0.5" texture="texplane" texrepeat="1 1"
+      texuniform="true" />
+    <material name="block_mat" specular="0" shininess="0.5" reflectance="0" rgba="1 0 0 1"></material>
+    <material name="table_mat" specular="0" shininess="0.5" reflectance="0"
+      rgba="0.35 0.35 0.35 1"></material>
+    <mesh name="base_link" file="base_link.STL" />
+    <mesh name="link1" file="link1.STL" />
+    <mesh name="link2" file="link2.STL" />
+    <mesh name="link3" file="link3.STL" />
+    <mesh name="link4" file="link4.STL" />
+    <mesh name="link5" file="link5.STL" />
+    <mesh name="link6" file="link6.STL" />
+    <mesh name="flange" file="flange.STL" />
+    <mesh name="gripper_base" file="gripper_base.STL" />
+    <mesh name="right_gear_link" file="right_gear_link.STL" />
+    <mesh name="right_finger_link" file="right_finger_link.STL" />
+    <mesh name="left_gear_link" file="left_gear_link.STL" />
+    <mesh name="left_finger_link" file="left_finger_link.STL" />
+    <mesh name="right_hinge_link" file="right_hinge_link.STL" />
+    <mesh name="left_hinge_link" file="left_hinge_link.STL" />
+  </asset>
+
+  <contact>
+    <exclude body1="table" body2="mycobot" />
+    <exclude body1="table" body2="ground" />
+    <exclude body1="link6" body2="left_gear_link" />
+    <exclude body1="link6"
+      body2="right_gear_link" />
+    <exclude body1="link6" body2="left_hinge_link" />
+    <exclude body1="link6" body2="right_hinge_link" />
+    <exclude body1="right_finger_link" body2="right_hinge_link" />
+    <exclude body1="left_finger_link" body2="left_hinge_link" />
+    <exclude body1="left_finger_link" body2="right_finger_link" />
+    <exclude body1="right_gear_link" body2="left_gear_link" />
+  </contact>
+
+  <tendon>
+    <fixed name="split">
+      <joint joint="robot0:right_gear_joint" coef="0.5" />
+      <joint joint="robot0:left_gear_joint" coef="0.5" />
+    </fixed>
+  </tendon>
+
+  <equality>
+    <connect anchor="0.021833 -0.005 -0.0072346" body1="right_finger_link"
+      body2="right_hinge_link"
+      solimp="0.95 0.99 0.001" solref="0.005 1" />
+    <connect anchor="0.021833 -0.005 0.0072347" body1="left_finger_link"
+      body2="left_hinge_link"
+      solimp="0.95 0.99 0.001" solref="0.005 1" />
+    <joint joint1="robot0:right_gear_joint" joint2="robot0:left_gear_joint" polycoef="0 1 0 0 0"
+      solimp="0.95 0.99 0.001" solref="0.005 1" />
+  </equality>
+
+  <default>
+    <default class="mycobot">
+      <joint armature="0.1" damping="1"
+        range="-2.96706 2.96706"
+        limited="true" />
+      <general dyntype="none" biastype="affine" ctrlrange="-2.96706 2.96706"
+        forcerange="-87 87" forcelimited="true" ctrllimited="true" />
+    </default>
+    <default class="driver">
+      <joint range="0 0.7" armature="0.005" damping="0.1" solimplimit="0.95 0.99 0.001"
+        solreflimit="0.005 1" limited="true" />
+    </default>
+    <default class="follower">
+      <joint range="-0.872664 0.872664" pos="0 0 0" solimplimit="0.95 0.99 0.001"
+        solreflimit="0.005 1" limited="true" />
+    </default>
+    <default class="coupler">
+      <joint solimplimit="0.95 0.99 0.001"
+        solreflimit="0.005 1" />
+    </default>
+  </default>
+
+  <worldbody>
+
+    <geom name="ground" pos="0 0 0" size="5 5 10" material="MatGnd" type="plane" contype="0"
+      conaffinity="0" />
+    <body name="ground" pos="0 0 0">
+      <site name="target0" pos="0.3 0 0.81" size="0.01 0.01 0.01" rgba="1 0 0 0.2"
+        type="box"></site>
+    </body>
+
+    <body name="table" pos="0 0 0.4">
+      <geom pos="0 0 0" size="0.4 0.4 0.4" type="box" group="0" mass="2000"
+        material="table_mat" contype="1"
+        conaffinity="1" />
+    </body>
+    <body name="table2" pos="0 -0.35 0.83">
+      <geom pos="0 0 0" size="0.4 0.05 0.03" type="box" group="0" mass="2000"
+        material="table_mat" contype="1"
+        conaffinity="1" />
+    </body>
+
+    <!-- front view -->
+    <camera name="frontview" pos="-1.175 -0.009 1.577"
+      xyaxes="0.010 -1.000 -0.000 0.497 0.005 0.868" />
+    <!-- bird view -->
+    <camera mode="fixed" name="birdview" pos="0 0 2.2" quat="0.7071 0 0 0.7071" />
+    <!-- side view -->
+    <camera name="sideview" pos="0.006 1.240 1.784" xyaxes="-1.000 0.005 -0.000 -0.003 -0.552 0.834" />
+
+    <body name="mycobot" childclass="mycobot" pos="0 -0.35 0.86" quat="0 0 0 1">
+      <geom type="mesh" contype="1" conaffinity="1" group="1" density="0"
+        rgba="0.792157 0.819608 0.933333 1" mesh="base_link" />
+      <geom type="mesh" rgba="0.792157 0.819608 0.933333 1" mesh="base_link" />
+      <body name="link1" pos="0 -0.0038673 0.0774" euler="0 0 3.1415926">
+        <inertial pos="0.00714921 -2.49114e-06 0.0385507"
+          quat="0.979105 -0.000345724 0.203355 0.000174858" mass="0.0427369"
+          diaginertia="4.25453e-05 3.72465e-05 1.28094e-05" />
+        <joint name="robot0:joint1" pos="0 0 0" axis="0 0 -1" />
+        <geom type="mesh" contype="1" conaffinity="1" group="1" density="0"
+          rgba="0.792157 0.819608 0.933333 1" mesh="link1" />
+        <geom type="mesh" rgba="0.792157 0.819608 0.933333 1" mesh="link1" />
+        <body name="link2" pos="0.03862 0 0.06">
+          <inertial pos="0.0195673 -3.76182e-08 0.0516249"
+            quat="0.999998 9.2767e-05 -0.00200461 9.66169e-05" mass="0.0668491"
+            diaginertia="0.000167029 0.000158388 2.06202e-05" />
+          <joint name="robot0:joint2" pos="0 0 0" axis="-1 0 0" />
+          <geom type="mesh" contype="1" conaffinity="1" group="1" density="0"
+            rgba="0.792157 0.819608 0.933333 1" mesh="link2" />
+          <geom type="mesh" rgba="0.792157 0.819608 0.933333 1" mesh="link2" />
+          <body name="link3" pos="-0.006664 0 0.11">
+            <inertial pos="-0.0231609 -5.61244e-07 0.0437186"
+              quat="0.999737 3.49095e-05 -0.0229275 4.08218e-05" mass="0.0533251"
+              diaginertia="0.000101777 9.73985e-05 1.35127e-05" />
+            <joint name="robot0:joint3" pos="0 0 0" axis="1 0 0" />
+            <geom type="mesh" contype="1" conaffinity="1" group="1" density="0"
+              rgba="0.792157 0.819608 0.933333 1" mesh="link3" />
+            <geom type="mesh" rgba="0.792157 0.819608 0.933333 1" mesh="link3" />
+            <body name="link4" pos="0.00046458 0 0.096">
+              <inertial pos="0.0195553 1.43402e-05 0.00768729"
+                quat="0.000387903 0.385562 0.000244078 0.922682" mass="0.0240612"
+                diaginertia="1.10891e-05 9.32651e-06 4.46821e-06" />
+              <joint name="robot0:joint4" pos="0 0 0" axis="-1 0 0" />
+              <geom type="mesh" contype="1" conaffinity="1" group="1" density="0"
+                rgba="0.792157 0.819608 0.933333 1" mesh="link4" />
+              <geom type="mesh" rgba="0.792157 0.819608 0.933333 1" mesh="link4" />
+              <body name="link5" pos="0.03006 0 0.03263" euler="0 0 1.570796327">
+                <inertial pos="2.48381e-05 -7.55802e-05 0.0267714"
+                  quat="0.975475 0.00322907 0.220035 0.00469099" mass="0.0327884"
+                  diaginertia="1.48708e-05 1.33354e-05 7.13883e-06" />
+                <joint name="robot0:joint5" pos="0 0 0" axis="0 0 -1" />
+                <geom type="mesh" contype="1" conaffinity="1" group="1" density="0"
+                  rgba="0.792157 0.819608 0.933333 1" mesh="link5" />
+                <geom type="mesh" rgba="0.792157 0.819608 0.933333 1" mesh="link5" />
+                <body name="link6" pos="0.026166 0 0.03733" euler = "-2.35619449 0 0">
+                  <inertial pos="0.0417978 -0.00630034 -0.000526342"
+                    quat="-0.179978 0.674045 0.238998 0.675389"
+                    mass="0.0649501"
+                    diaginertia="5.36781e-05 5.12254e-05 2.74582e-05" />
+                  <joint name="robot0:joint6" pos="0 0 0" axis="-1 0 0" />
+                  <geom type="mesh" contype="1" conaffinity="1" group="1" density="0"
+                    rgba="0.792157 0.819608 0.933333 1" mesh="link6" />
+                  <geom type="mesh" rgba="0.792157 0.819608 0.933333 1" mesh="link6" />
+                  <body name="flange">
+                    <geom type="mesh" contype="1" conaffinity="1" group="1" density="0"
+                      rgba="0.792157 0.819608 0.933333 1" mesh="flange" />
+                    <geom type="mesh" rgba="0.792157 0.819608 0.933333 1" mesh="flange" />
+                    <body name="gripper_camera_rgb_frame" pos="0.025 -0.043 0">
+                      <body name="gripper_camera_rgb_optical_frame" pos="0 0 0"
+                        quat="0.5 -0.5 0.5 -0.5">
+                        <camera euler="3.1415 0 0" fovy="50" name="gripper_camera_rgb" pos="0 0 0"></camera>
+                      </body>
+                    </body>
+                    <body name="gripper_camera_depth_frame" pos="0 0.045 0">
+                      <body name="gripper_camera_depth_optical_frame" pos="0 0 0"
+                        quat="0.5 -0.5 0.5 -0.5"></body>
+                    </body>
+                    <body euler="0 0 0" name="gripper_base">
+                      <body name="gripper_tcp" pos="0.13 -0.01 -0.001" />
+                      <geom type="mesh" contype="0" conaffinity="0" group="1" density="0"
+                        rgba="0.792157 0.819608 0.933333 1" mesh="gripper_base" />
+                      <geom type="mesh" rgba="0.792157 0.819608 0.933333 1" mesh="gripper_base" />
+                      <body name="right_gear_link" pos="0.0626 -0.00505 0.01225">
+                        <inertial pos="0.00313636 0.0026671 0.00586855"
+                          quat="0.681896 0.190756 0.185171 0.681426" mass="0.00306867"
+                          diaginertia="5.4546e-07 4.35596e-07 1.20909e-07" />
+                        <joint name="robot0:right_gear_joint" pos="0 0 0" axis="0 1 0"
+                          class="driver" />
+                        <geom type="mesh" contype="0" conaffinity="0" group="1" density="0"
+                          rgba="0.792157 0.819608 0.933333 1" mesh="right_gear_link" />
+                        <geom type="mesh" rgba="0.792157 0.819608 0.933333 1" mesh="right_gear_link" />
+                        <body name="right_finger_link" pos="0.015573 -0.01 0.026804">
+                          <inertial pos="0.0324451 0.005 -0.0109997" quat="0 0.775032 0 0.631922"
+                            mass="0.00694636" diaginertia="1.60061e-06 1.45682e-06 2.82185e-07" />
+                          <joint name="right_finger_joint" pos="0 0 0" axis="0 -1 0"
+                            class="follower" />
+                          <geom type="mesh" contype="0" conaffinity="0" group="1" density="0"
+                            rgba="0.792157 0.819608 0.933333 1" mesh="right_finger_link" />
+                          <geom type="mesh" rgba="0.792157 0.819608 0.933333 1"
+                            mesh="right_finger_link" />
+                          <body name="right_finger_layer">
+                            <geom name="right_finger_layer" type="box" size="0.013 0.01 0.001"
+                              pos="0.041 0.005 -0.021"
+                              condim="4" friction="2 0.3 0.1"
+                              solref="-20000 -500"
+                              solimp="0.999 0.999 0.001"></geom>
+                          </body>
+                        </body>
+                      </body>
+                      <body name="left_gear_link" pos="0.0626 -0.00505 -0.01325">
+                        <inertial pos="0.00282687 0.00252761 -0.00562195"
+                          quat="0.681488 -0.18894 -0.188164 0.68152" mass="0.00317605"
+                          diaginertia="5.58215e-07 4.42379e-07 1.28181e-07" />
+                        <joint name="robot0:left_gear_joint" pos="0 0 0" axis="0 -1 0"
+                          class="driver" />
+                        <geom type="mesh" contype="0" conaffinity="0" group="1" density="0"
+                          rgba="0.792157 0.819608 0.933333 1" mesh="left_gear_link" />
+                        <geom type="mesh" rgba="0.792157 0.819608 0.933333 1" mesh="left_gear_link" />
+                        <body name="left_finger_link" pos="0.015455 -0.01 -0.026873">
+                          <inertial pos="0.0324451 0.005 0.0109997" quat="0 0.631922 0 0.775032"
+                            mass="0.00694636" diaginertia="1.60061e-06 1.45682e-06 2.82185e-07" />
+                          <joint name="left_finger_joint" pos="0 0 0" axis="0 1 0"
+                            class="follower" />
+                          <geom type="mesh" contype="0" conaffinity="0" group="1" density="0"
+                            rgba="0.792157 0.819608 0.933333 1" mesh="left_finger_link" />
+                          <geom type="mesh" rgba="0.792157 0.819608 0.933333 1"
+                            mesh="left_finger_link" />
+                          <body name="left_finger_layer">
+                            <geom name="left_finger_layer" type="box" size="0.013 0.01 0.001"
+                              pos="0.041 0.005 0.021"
+                              condim="4" friction="2 0.3 0.1" solref="-20000 -500"
+                              solimp="0.999 0.999 0.001"></geom>
+                          </body>
+                        </body>
+                      </body>
+                      <body name="right_hinge_link" pos="0.08443 -0.02005 0.005">
+                        <inertial pos="0.00766814 0.00999994 0.0132034" quat="0.965593 0 0.260056 0"
+                          mass="0.00272533" diaginertia="4.80195e-07 3.55161e-07 1.60795e-07" />
+                        <joint name="right_hinge_joint" pos="0 0 0" axis="0 1 0"
+                          class="coupler" />
+                        <geom type="mesh" contype="0" conaffinity="0" group="1" density="0"
+                          rgba="0.792157 0.819608 0.933333 1" mesh="right_hinge_link" />
+                        <geom type="mesh" rgba="0.792157 0.819608 0.933333 1"
+                          mesh="right_hinge_link" />
+                      </body>
+                      <body name="left_hinge_link" pos="0.08443 -0.02005 -0.006">
+                        <inertial pos="0.00784767 0.00999994 -0.013651"
+                          quat="0.966166 0 -0.257923 0"
+                          mass="0.00272533" diaginertia="4.80195e-07 3.55161e-07 1.60795e-07" />
+                        <joint name="left_hinge_joint" pos="0 0 0" axis="0 1 0" class="coupler" />
+                        <geom type="mesh" contype="0" conaffinity="0" group="1" density="0"
+                          rgba="0.792157 0.819608 0.933333 1" mesh="left_hinge_link" />
+                        <geom type="mesh" rgba="0.792157 0.819608 0.933333 1" mesh="left_hinge_link" />
+                      </body>
+                      <site name="EEF" pos="0.13 -0.01 -0.001" rgba="0 0 1 1"
+                        size="0.005 0.005 0.005" />
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+
+    <body name="object0" pos="-0.23 0 0.81">
+      <joint name="object0:joint" type="free" damping="0.01"></joint>
+      <geom size="0.01 0.01 0.01" type="box" condim="4" name="object0" material="block_mat"
+        solimp="0.999 0.999 0.001" solref="0.001 1" friction="0.95 0.3 0.1"></geom>
+      <site name="object0" pos="0 0 0" size="0.01 0.01 0.01" rgba="1 0 0 1" type="box"></site>
+    </body>
+    <light directional="true" ambient="0.5 0.5 0.5" diffuse="0.8 0.8 0.8" specular="0.3 0.3 0.3"
+      castshadow="false" pos="0 0 4" dir="0 0 -1" name="light0"></light>
+
+  </worldbody>
+  <keyframe>
+    <key name="mycobot_init"
+      qpos="-0.00427966 0.832116 -0.0495165 0.787458 -0.00114896 
+            -0.79159 0.000382513 -0.0002455 0.000381984 0.000843164 
+            0.000655698 -0.000560292 -0.23 0 0.809981 -1 0 0 0" 
+      qvel="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0" 
+      ctrl="0 0.785398 0 0.785398 0 -0.785398 0">
+    </key>
+  </keyframe>
+  <actuator>
+    <general class="mycobot" name="actuator1" joint="robot0:joint1" gainprm="4500"
+      biasprm="0 -4500 -450" />
+    <general class="mycobot" name="actuator2" joint="robot0:joint2" gainprm="4500"
+      biasprm="0 -4500 -450"
+    />
+    <general class="mycobot" name="actuator3" joint="robot0:joint3" gainprm="3500"
+      biasprm="0 -3500 -350" />
+    <general class="mycobot" name="actuator4" joint="robot0:joint4" gainprm="2000"
+      biasprm="0 -2000 -200"
+      forcerange="-12 12" />
+    <general class="mycobot" name="actuator5" joint="robot0:joint5" gainprm="2000"
+      biasprm="0 -2000 -200"
+      forcerange="-12 12" />
+    <general class="mycobot" name="actuator6" joint="robot0:joint6" gainprm="2000"
+      biasprm="0 -2000 -200"
+      forcerange="-12 12" />
+
+    <general biastype="affine" name="fingers_actuator" tendon="split" forcerange="-5 5"
+      ctrlrange="0 255" gainprm="0.27 0 0" biasprm="0 -100 -10" forcelimited="true"
+      ctrllimited="true" />
+  </actuator>
+</mujoco>
