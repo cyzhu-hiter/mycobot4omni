@@ -11,9 +11,10 @@ import pathlib
 
 import matplotlib.pyplot as plt 
 from collections import OrderedDict
+from omni.isaac.gym.vec_env import VecEnvBase
 
 
-class MyCobotEnv(gym.Env):
+class MyCobotEnv(VecEnvBase):
     metadata = {"render.modes": ["human"]}
 
     def __init__(
@@ -25,43 +26,36 @@ class MyCobotEnv(gym.Env):
         seed=0,
         args=None
     ) -> None:
-        from omni.isaac.kit import SimulationApp
-
-        self._args = args
-        self.headless = args.headless
-        self._simulation_app = SimulationApp({"headless": self.headless, "anti_aliasing": 0})
-        self._skip_frame = skip_frame
-        self._dt = physics_dt * self._skip_frame
-        self._max_episode_length = max_episode_length
-        self._steps_after_reset = int(rendering_dt / physics_dt)
-        self.joint_control_method = args.joint_control
-        self.joint_collision_threshold = 0.5/180*math.pi # .5 degree in radian
-        self.joint_effective_move = 2/180*math.pi
+        VecEnvBase.__init__(
+            self,
+            headless=args.headless,
+            sim_device=0, # improve
+            enable_livestream=args.enable_livestream,
+            enable_viewport=args.enable_viewport
+            )
+        
         from omni.isaac.core import World
         from omni.isaac.core.objects import VisualCuboid, DynamicCuboid
+        self.my_world = World(physics_dt=physics_dt,
+                              rendering_dt=rendering_dt,
+                              stage_units_in_meters=1.0)
+        self.add_default_ground_plan()
 
-        self._my_world = World(physics_dt=physics_dt, rendering_dt=rendering_dt, stage_units_in_meters=1.0)
-        self._my_world.scene.add_default_ground_plane()
-
-        from mycobot import MyCobot
-        # from omni.isaac.core.articulations import ArticulationView
-
-        self.mycobot = self._my_world.scene.add(
-            MyCobot(
+        from mycobot import myCobot
+        self.my_world.scene.add(
+            myCobot(
                 prim_path="/mycobot",
                 usd_path=None,
                 name="mycobot",
                 translation=torch.tensor([0.0, 0.0, 0.0]),
-                scaling_factor=1.0)
+                scaling_factor=1.0
+            )
         )
-        self._mycobot = self._my_world.scene.get_object('mycobot')
-        # self.actuators = ['joint1','joint2','joint3','joint4','joint5','joint6','left_gear_joint']
-        self.actuators = ['joint1','joint2','joint3','joint4','joint5']
-
+        self.mycobot = self._my_world.scene.get_object('mycobot')
 
         self.goal = self._my_world.scene.add(
             VisualCuboid(
-                prim_path="/new_cube_1",
+                prim_path="/goal_cube_1",
                 name="visual_cube",
                 position=np.array([0.20, 0, 0.01]),
                 size=0.02,
@@ -69,57 +63,113 @@ class MyCobotEnv(gym.Env):
             )
         )
 
-        from omni.isaac.core.prims.xform_prim import XFormPrim
+        self.object = self._my_world.scene.add(
+            DynamicCuboid(
+                prim_path="/object_cube_1",
+                name="visual_cube",
+                position=np.array([0.20, 0.05, 0.01]),
+                size=0.02,
+                color=np.array([0, 0.5, 0]),
+            )
+        )
 
-        self._tip = XFormPrim(prim_path="/mycobot/gripper_base/tip", name="robot_arm_tip")
+        
+        
+        # from omni.isaac.kit import SimulationApp
 
-        from omni.isaac.core.utils.stage import get_current_stage
-        from pxr import UsdLux
+        # self._args = args
+        # self.headless = args.headless
+        # self._simulation_app = SimulationApp({"headless": self.headless, "anti_aliasing": 0})
+        # self._skip_frame = skip_frame
+        # self._dt = physics_dt * self._skip_frame
+        # self._max_episode_length = max_episode_length
+        # self._steps_after_reset = int(rendering_dt / physics_dt)
+        # self.joint_control_method = args.joint_control
+        # self.joint_collision_threshold = 0.5/180*math.pi # .5 degree in radian
+        # self.joint_effective_move = 2/180*math.pi
+        # from omni.isaac.core import World
+        # from omni.isaac.core.objects import VisualCuboid, DynamicCuboid
 
-        stage = get_current_stage()
-        light = UsdLux.DomeLight.Define(stage, "/World/defaultDomeLight")
-        light.GetPrim().GetAttribute("intensity").Set(500)
+        # self._my_world = World(physics_dt=physics_dt, rendering_dt=rendering_dt, stage_units_in_meters=1.0)
+        # self._my_world.scene.add_default_ground_plane()
 
-        self.seed(seed)
-        # self.set_world_window()
-        self.reward_range = (-float("inf"), float("inf"))
-        gym.Env.__init__(self)
+        # from mycobot import MyCobot
+        # # from omni.isaac.core.articulations import ArticulationView
 
-        self.space_limit = 0.5
-        self.angle_limit = math.pi*17/18
-        self.vel_limit = 50
-        self.action_space = spaces.Box(low = -self.angle_limit,
-                                       high = self.angle_limit,
-                                       shape = (len(self.actuators),),
-                                       dtype = np.float32)
-        if self.joint_control_method == 'position':  # adjust here for scale reorgnize  
-            self.action_scale = 1
-        elif self.joint_control_method == 'efforts':
-            self.action_scale = 12
+        # self.mycobot = self._my_world.scene.add(
+        #     MyCobot(
+        #         prim_path="/mycobot",
+        #         usd_path=None,
+        #         name="mycobot",
+        #         translation=torch.tensor([0.0, 0.0, 0.0]),
+        #         scaling_factor=1.0)
+        # )
+        # self._mycobot = self._my_world.scene.get_object('mycobot')
+        # # self.actuators = ['joint1','joint2','joint3','joint4','joint5','joint6','left_gear_joint']
+        # self.actuators = ['joint1','joint2','joint3','joint4','joint5']
 
-        # Vision Based observation_space, which need to maobservationch the method get_observation return
-        # For original RGB camera feedback, unpolished
-        # self.observation_space = spaces.Box(low=0, high=255, shape=(64, 64, 3), dtype=np.uint8)
-        # For Grey scale 
-        # self.observation_space = spaces.Box(low=0, high=255, shape=(711,), dtype=np.float32)
-        # For direct non-vision based training
 
-        limit = np.array([self.space_limit] * 9 +
-                         [self.angle_limit] * len(self.actuators) +
-                         [self.vel_limit] * len(self.actuators))
-        self.observation_space = spaces.Box(low=-limit, high=limit, dtype=np.float32)
-        # self.observation_space = spaces.Dict(
-        #         {
-        #             "observation": spaces.Box(low=-3.0, high=3, shape=(2*len(self.actuators)+6,), dtype=np.float32),
-        #             "achieved_goal": spaces.Box(low=-0.5, high=0.5, shape=(3,), dtype=np.float32),
-        #             "desired_goal": spaces.Box(low=-0.5, high=0.5, shape=(3,), dtype=np.float32),
-        #         }
+        # self.goal = self._my_world.scene.add(
+        #     VisualCuboid(
+        #         prim_path="/new_cube_1",
+        #         name="visual_cube",
+        #         position=np.array([0.20, 0, 0.01]),
+        #         size=0.02,
+        #         color=np.array([1.0, 0, 0]),
         #     )
+        # )
+
+        # from omni.isaac.core.prims.xform_prim import XFormPrim
+
+        # self._tip = XFormPrim(prim_path="/mycobot/gripper_base/tip", name="robot_arm_tip")
+
+        # from omni.isaac.core.utils.stage import get_current_stage
+        # from pxr import UsdLux
+
+        # stage = get_current_stage()
+        # light = UsdLux.DomeLight.Define(stage, "/World/defaultDomeLight")
+        # light.GetPrim().GetAttribute("intensity").Set(500)
+
+        # self.seed(seed)
+        # # self.set_world_window()
+        # self.reward_range = (-float("inf"), float("inf"))
+        # gym.Env.__init__(self)
+
+        # self.space_limit = 0.5
+        # self.angle_limit = math.pi*17/18
+        # self.vel_limit = 50
+        # self.action_space = spaces.Box(low = -self.angle_limit,
+        #                                high = self.angle_limit,
+        #                                shape = (len(self.actuators),),
+        #                                dtype = np.float32)
+        # if self.joint_control_method == 'position':  # adjust here for scale reorgnize  
+        #     self.action_scale = 1
+        # elif self.joint_control_method == 'efforts':
+        #     self.action_scale = 12
+
+        # # Vision Based observation_space, which need to maobservationch the method get_observation return
+        # # For original RGB camera feedback, unpolished
+        # # self.observation_space = spaces.Box(low=0, high=255, shape=(64, 64, 3), dtype=np.uint8)
+        # # For Grey scale 
+        # # self.observation_space = spaces.Box(low=0, high=255, shape=(711,), dtype=np.float32)
+        # # For direct non-vision based training
+
+        # limit = np.array([self.space_limit] * 9 +
+        #                  [self.angle_limit] * len(self.actuators) +
+        #                  [self.vel_limit] * len(self.actuators))
+        # self.observation_space = spaces.Box(low=-limit, high=limit, dtype=np.float32)
+        # # self.observation_space = spaces.Dict(
+        # #         {
+        # #             "observation": spaces.Box(low=-3.0, high=3, shape=(2*len(self.actuators)+6,), dtype=np.float32),
+        # #             "achieved_goal": spaces.Box(low=-0.5, high=0.5, shape=(3,), dtype=np.float32),
+        # #             "desired_goal": spaces.Box(low=-0.5, high=0.5, shape=(3,), dtype=np.float32),
+        # #         }
+        # #     )
 
 
-        # self.max_force = 1
-        # self.max_angular_velocity = math.pi
-        self.reset_counter = 0
+        # # self.max_force = 1
+        # # self.max_angular_velocity = math.pi
+        # self.reset_counter = 0
         
         return
 
@@ -188,7 +238,7 @@ class MyCobotEnv(gym.Env):
         return observations, reward, done, info
 
     def reset(self):
-        self._my_world.reset()
+        self.my_world.reset()
         self.reset_counter = 0
         # randomize goal location in circle around robot or torus or half sphere
         alpha = 2 * math.pi * (np.random.rand()-0.5) *3/4 # 360 degree
@@ -205,8 +255,8 @@ class MyCobotEnv(gym.Env):
         self._mycobot.set_joint_positions(positions=np.concatenate([(np.random.rand(len(self.actuators_idx))-0.5)*math.pi/3, np.array([0])]),
                                           joint_indices=self.actuators_idx+[6])
         # self._mycobot.set_joint_positions(positions=np.array([-90,-30,0,0,90,0])*np.pi/180,joint_indices=self.actuators_idx)
-        observations = self.get_observations()
-        return observations
+        # observations = self.get_observations()
+        # return observations
 
     def get_observations(self):
         self._my_world.render()

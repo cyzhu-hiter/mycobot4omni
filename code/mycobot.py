@@ -6,7 +6,7 @@ from omni.isaac.core.utils.stage import add_reference_to_stage
 import torch
 import pathlib
 
-class MyCobot(Robot):
+class myCobot(Robot):
     def __init__(
         self,
         prim_path: str,
@@ -22,9 +22,7 @@ class MyCobot(Robot):
         self._name = name
  
         if self._usd_path is None:
-            # file_name = "mycobot/robot/urdf_mycobot_rejoint_final.usd"
-            file_name = "mycobot/robot/urdf_mycobot_collision_test.usd"
-            # file_name = "mycobot/robot/urdf_mycobot_rejoint_without_drive.usd"
+            file_name = "mycobot/robot/mycobot_v2.usd"
             intanceable_asset_usd = pathlib.Path(__file__).resolve().parents[2] / file_name
             self._usd_path = str(intanceable_asset_usd)
 
