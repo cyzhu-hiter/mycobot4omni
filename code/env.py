@@ -26,6 +26,15 @@ class MyCobotEnv(VecEnvBase):
         seed=0,
         args=None
     ) -> None:
+<<<<<<< HEAD
+
+        self._skip_frame=skip_frame
+        self.physics_dt=physics_dt
+        self.rendering_dt=rendering_dt
+        self.max_episode_length=max_episode_length
+
+=======
+>>>>>>> eccb7cfcd3f0b5824167f86968529d970a66c69c
         VecEnvBase.__init__(
             self,
             headless=args.headless,
@@ -48,7 +57,11 @@ class MyCobotEnv(VecEnvBase):
                 usd_path=None,
                 name="mycobot",
                 translation=torch.tensor([0.0, 0.0, 0.0]),
+<<<<<<< HEAD
+                # scaling_factor=1.0
+=======
                 scaling_factor=1.0
+>>>>>>> eccb7cfcd3f0b5824167f86968529d970a66c69c
             )
         )
         self.mycobot = self._my_world.scene.get_object('mycobot')
