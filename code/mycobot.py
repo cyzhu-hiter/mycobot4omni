@@ -18,7 +18,7 @@ class myCobot(Robot):
         prim_path: str,
         name: Optional[str] = "mycobot",
         usd_path: Optional[str] = None,
-        translation: Optional[np.ndarray] = torch.tensor([.0, .0, .0]),
+        translation: Optional[np.ndarray] = torch.tensor([.0, .0, .000]),
         orientation: Optional[np.ndarray] = None,
         # scale: Optional[np.ndarray] = torch.tensor([1.0, 1.0, 1.0]),
         # scaling_factor: Optional[float] = 1.0,
@@ -28,16 +28,10 @@ class myCobot(Robot):
         self._name = name
 
         self._position = torch.tensor([1.0, 0.0, 0.0]) if translation is None else translation
-        self._orientation = torch.tensor([0.0, 0.0, 0.0, 1.0]) if orientation is None else orientation
-
-        # if self._usd_path is None:
-        #     assets_root_path = get_assets_root_path()
-        #     if assets_root_path is None:
-        #         carb.log_error("Could not find Isaac Sim assets folder")
-        #     self._usd_path = assets_root_path + "/Isaac/Robots/Franka/franka_instanceable.usd"
+        # self._orientation = torch.tensor([0.0, 0.0, 0.0, 1.0]) if orientation is None else orientation
 
         if self._usd_path is None:
-            file_name = "mycobot/robot/mycobot_v3.usd"
+            file_name = "mycobot4omni/robot/mycobot_v6_instance.usd"
             intanceable_asset_usd = pathlib.Path(__file__).resolve().parents[2] / file_name
             self._usd_path = str(intanceable_asset_usd)
 
@@ -47,8 +41,8 @@ class myCobot(Robot):
             prim_path=prim_path,
             name=name,
             translation=translation, # times scaling_factor
-            orientation=orientation,
-            # scale=scale * scaling_factor,
+            # orientation=orientation,
+            # scale=scale*scaling_factor,
             articulation_controller=None,
         )
 
@@ -60,15 +54,16 @@ class myCobot(Robot):
             "link4/joint5",
             "link5/joint6",
             "gripper_base/left_gear_joint",
+            "gripper_base/right_gear_joint",
         ]
 
-        drive_type = ["angular"] * 7
-        # default_dof_pos = [math.degrees(x) for x in [0.0, -1.0, 0.0, -2.2, 0.0, 2.4, 0.8]] + [0.02, 0.02]
-        default_dof_pos = [180, -45, 0, -45, 90, -135, 0]
-        stiffness = [400*np.pi/180] * 7 + [10000]
-        damping = [80*np.pi/180] * 7 + [100]
-        max_force = [87, 87, 87, 87, 12, 12, 12, 200, 200]
-        max_velocity = [math.degrees(x) for x in [2.175, 2.175, 2.175, 2.175, 2.61, 2.61, 2.61]] + [0.2]
+        drive_type = ["angular"] * 8
+        default_dof_pos = [-180, -45, 0, -45, -90, -90, 0, 0]
+        # default_dof_pos = [0, 0, 0, 0, 0, 0, 0]
+        stiffness = [400*np.pi/180] * 6 + [30, 30]
+        damping = [80*np.pi/180] * 8
+        max_force = [70, 50, 50, 50, 12, 12, 100, 100]
+        max_velocity = [math.degrees(x) for x in [2.175, 2.175, 2.175, 2.175, 2.61, 2.61]] + [0.5, 0.5]
 
         for i, dof in enumerate(dof_paths):
             set_drive(

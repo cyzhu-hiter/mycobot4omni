@@ -1,0 +1,17 @@
+# This file is for model version checking.
+
+# scripts to convert asset instanceable
+from omniisaacgymenvs.utils.usd_utils.create_instanceable_assets import update_reference
+
+mycobot_v3: May 29th, 2023 -> mycobot_instance: May 30th, 2023
+    Driver parameters updated.
+    Generated based on mycobot_v3
+    Bugs:
+	1. env_0 initialization, gripper gets twisted;
+	2. gear_joint is not working;
+	3. tip cannot be applied to RigidPrimView, instead of just  XformPrimView. 
+
+mycobot_v4: June 1st, 2023 -> mycobot_v4_instance.usd
+    1. Add distance between the flange and gripper base
+    2. Disable collidor of two gear joints
+    3. Move tip out of the xform, gripper_base and create a new Xform "_tip" to help retrieving RigidPrimView.
